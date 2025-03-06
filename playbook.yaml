@@ -1,0 +1,12 @@
+- name: Deploy inception to the target host
+  hosts: all  
+  become: yes
+  vars_files:
+    - secrets.yaml
+  roles:
+    - role: common
+    - role: db
+    - role: wp
+    - role: nginx
+    - role: orchestrate
+  

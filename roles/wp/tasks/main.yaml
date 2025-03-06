@@ -1,0 +1,19 @@
+---
+- name: copy Dockerfile and scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item }}"
+  with_items:
+    - Dockerfile
+    - setup.sh
+  
+
+
+- name: build Docker image
+  docker_image:
+    build:
+      path: /tmp
+    name: wp
+    tag: 42
+    state: present
+    source: build

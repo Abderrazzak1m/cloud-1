@@ -1,0 +1,7 @@
+all:
+  hosts:
+    vm1:
+      ansible_host: "{{ secrets.vm1_host }}"
+      ansible_user: "{{ secrets.vm1_user }}"
+      ansible_ssh_private_key_file: "{{ secrets.vm1_private_key }}"
+      ansible_ssh_port: "{{ secrets.vm1_port }}"

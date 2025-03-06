@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  wordpress:
+    container_name: wordpress_container
+    image: wp:42
+    env_file:
+      - .env
+  
+    ports:
+      - "9000:9000"
+    volumes:
+      - wp_volume:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+    networks:
+      - cloud_1_network
+  nginx:
+      image: nginx:42
+      container_name: nginx
+      ports:
+        - "443:443"
+      volumes:
+        - wp_volume:/var/www/html
+      depends_on:
+        - wordpress
+      networks:
+        - cloud_1_network
+      restart: always
+
+  mysql:
+    container_name: mysql
+    image: db:42
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env
+    volumes:
+      - db_volume:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: always
+    networks:
+      - cloud_1_network
+
+volumes:
+  db_volume:
+  wp_volume:
+
+networks:
+  cloud_1_network:
+    driver: bridge
+    attachable: true
