@@ -1,8 +1,10 @@
 - name: Deploy inception to the target host
   hosts: all  
-  become: yes
+  become: true
   vars_files:
     - secrets.yaml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   roles:
     - role: common
     - role: db

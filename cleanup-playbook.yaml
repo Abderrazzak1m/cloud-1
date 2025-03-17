@@ -1,0 +1,29 @@
+- name: cleanup docker resources
+  hosts: all
+  become: true
+  vars_files:
+    - secrets.yaml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: docker-compose down
+      community.docker.docker_compose_v2:
+        project_src: "/home/{{ ansible_user }}/cloud_1"
+        state: absent
+        remove_images: all
+        remove_volumes: true
+
+    - name: prune unused Docker objects
+      command: docker system prune -a -f
+
+    - name: remove the cloud_1 directory
+      file:
+        path: "/home/{{ ansible_user }}/cloud_1"
+        state: absent
+
+    - name: remove the data directory
+      file:
+        path: "/home/{{ ansible_user }}/data"
+        state: absent
+
+

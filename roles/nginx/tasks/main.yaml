@@ -1,4 +1,3 @@
----
 - name: copy Dockerfile and nginx.conf
   copy:
     src: "{{ item }}"
@@ -17,4 +16,12 @@
     state: present
     source: build
 
+
+- name: remove copied files
+  file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  with_items:
+    - Dockerfile
+    - default
 

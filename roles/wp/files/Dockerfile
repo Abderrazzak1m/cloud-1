@@ -1,13 +1,11 @@
-FROM ubuntu:latest
+FROM debian:buster
 
-RUN apt update -y
-RUN apt update -y && apt update -y \
-    && apt install -y php-fpm php-mysql
-RUN apt install curl -y
+RUN apt-get update -y && \
+    apt-get install -y php-fpm php-mysql curl
 
 COPY ./setup.sh /
 
-RUN chmod +x ./setup.sh
+RUN chmod +x /setup.sh
 
 EXPOSE 9000
 

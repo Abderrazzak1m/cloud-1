@@ -1,13 +1,13 @@
-FROM ubuntu:latest
 
-RUN apt-get update && \
-    apt-get install -y mysql-server && \
-    apt-get clean
+FROM debian:buster
 
-COPY setup.sh /
+RUN apt-get update
+RUN apt-get install mariadb-server -y
+
+COPY ./setup.sh /
 
 RUN chmod +x /setup.sh
 
 EXPOSE 3306
 
-CMD [ "/setup.sh" ] 
+CMD [ "/setup.sh" ]

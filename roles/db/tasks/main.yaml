@@ -1,4 +1,3 @@
----
 - name: copy Dockerfile and scripts
   copy:
     src: "{{ item }}"
@@ -15,5 +14,13 @@
     tag: 42
     state: present
     source: build
+
+- name: remove copied files
+  file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  with_items:
+    - Dockerfile
+    - setup.sh
 
 

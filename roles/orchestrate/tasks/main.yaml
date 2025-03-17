@@ -3,6 +3,14 @@
     path: "/home/{{ ansible_user }}/cloud_1"
     state: directory
 
+- name: create a directory for the docker-compose files
+  file:
+    path: "/home/{{ ansible_user }}/data/{{ item }}"
+    state: directory
+  with_items:
+    - db
+    - wp
+
 
 - name: copy docker-compose.yml and .env files
   copy:
@@ -12,7 +20,20 @@
     - docker-compose.yaml
     - .env
 
-- name: start the services
-  command: docker-compose up -d
-  args:
-    chdir: "/home/{{ ansible_user }}/cloud_1"
+- name: change domain name
+  shell: |
+    sed -i 's/localhost/{{ ansible_host }}/g' "/home/{{ ansible_user }}/cloud_1/.env"
+
+# - name: start the services
+#   command: docker-compose up -d
+#   args:
+#     chdir: "/home/{{ ansible_user }}/cloud_1"
+
+- name: Start the services using Docker Compose module
+  community.docker.docker_compose_v2:
+    project_src: "/home/{{ ansible_user }}/cloud_1"
+    state: present
+
+
+
+ 

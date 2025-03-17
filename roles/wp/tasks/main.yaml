@@ -7,8 +7,6 @@
     - Dockerfile
     - setup.sh
   
-
-
 - name: build Docker image
   docker_image:
     build:
@@ -17,3 +15,11 @@
     tag: 42
     state: present
     source: build
+
+- name: remove copied files
+  file:
+    path: "/tmp/{{ item }}"
+    state: absent
+  with_items:
+    - Dockerfile
+    - setup.sh
