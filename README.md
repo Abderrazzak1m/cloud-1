@@ -4,12 +4,18 @@
 This project automates the deployment of three services (**MariaDB, WordPress, and Nginx**) in a **Docker environment** on an **AWS EC2 instance** using **Ansible**. It follows a **modular architecture** for better scalability and reusability.
 
 ---
-
-## **1. AWS Infrastructure Setup (Using AWS Console)**
+## **1. Clone the Project**
+clone the Ansible project to your local machine:
+```
+git clone https://github.com/Abderrazzak1m/cloud-1.git
+cd cloud-1
+```
+---
+## **2. AWS Infrastructure Setup (Using AWS Console)**
 
 Before running the Ansible playbooks, you need to manually create an **AWS EC2 instance** with the required configurations:
 
-### **1.1 Create a Security Group**
+### **2.1 Create a Security Group**
 1. Navigate to **AWS Console → EC2 → Security Groups**.
 2. Click **Create security group** and set the following rules:
 
@@ -21,7 +27,7 @@ Before running the Ansible playbooks, you need to manually create an **AWS EC2 i
 
 3. Click **Create security group** and note the **Security Group ID**.
 
-### **1.2 Create a Key Pair**
+### **2.2 Create a Key Pair**
 1. Go to **AWS Console → EC2 → Key Pairs**.
 2. Click **Create Key Pair**.
 3. Choose:
@@ -34,7 +40,7 @@ mv ~/Downloads/cloud-1-key.pem ~/cloud-1/
 chmod 600 ~/cloud-1/cloud-1-key.pem 
 ```
 
-### **1.3 Creating an EC2 Instance**
+### **2.3 Creating an EC2 Instance**
 1. Go to AWS Console → EC2 → Launch Instance
 2. Select Ubuntu 22.04 LTS as the OS
 3. Choose instance type t2.micro (Free Tier eligible)
@@ -44,9 +50,9 @@ chmod 600 ~/cloud-1/cloud-1-key.pem
 
 ---
 
-## **2. Inventory File (hosts.yaml)**
+## **3. Inventory File (hosts.yaml)**
 The inventory file defines the remote servers (VMs) that Ansible will manage. In this project, the inventory is stored in YAML format for better readability.
-### **2.1 Example Inventory File (`hosts.yaml`)**
+### **3.1 Example Inventory File (`hosts.yaml`)**
 
 ```
 all:
@@ -58,9 +64,9 @@ all:
       ansible_ssh_port: "{{ secrets.vm1.port }}"
 
 ```
-## **3. Securing Secrets with Ansible Vault**
+## **4. Securing Secrets with Ansible Vault**
 This project stores sensitive information (e.g., SSH keys, IPs, usernames) in an encrypted Ansible Vault file.
-### **3.1 Example Secrets File**
+### **4.1 Example Secrets File**
 Example `example-secrets.yaml`:
 ```
 secrets:
@@ -71,7 +77,7 @@ secrets:
     port: <vm1_ssh_port>
 ```
 
-### **3.2 Creating a Secure Secrets File**
+### **4.2 Creating a Secure Secrets File**
 * To create a new encrypted secrets file, run:
 ```
 ansible-vault create secrets.yaml
@@ -89,7 +95,7 @@ ansible-vault encrypt secrets.yaml
 ```
 ansible-vault decrypt secrets.yaml
 ```
-## **4. Project Structure**
+## **5. Project Structure**
       cloud-1/
       │── README.md                   # Documentation  
       │── cleanup.yaml                 # Playbook to clean up resources  
@@ -126,7 +132,7 @@ ansible-vault decrypt secrets.yaml
       │   │   │   ├── main.yaml        # Docker Compose deployment tasks  
 
 
-## **5. Deploying the Infrastructure**
+## **6. Deploying the Infrastructure**
 Once the EC2 instance is ready and secrets are configured, run the following steps:
 1. **Verify connectivity** to the EC2 instance:
 ```
@@ -147,7 +153,7 @@ docker ps
 http://<vm1_ip>
 ```
 You should see the WordPress page.
-## **6. Cleaning Up**
+## **7. Cleaning Up**
 To remove the deployed containers and resources, run:
 ```
 ansible-playbook -i hosts.yaml cleanup.yaml --ask-vault-pass
