@@ -5,9 +5,9 @@ This project automates the deployment of three services (**MariaDB, WordPress, a
 
 ---
 
-## **1. AWS Infrastructure Setup**
+## **1. AWS Infrastructure Setup (Using AWS Console)**
 
-We will use the **AWS Management Console** to create the necessary resources.
+Before running the Ansible playbooks, you need to manually create an **AWS EC2 instance** with the required configurations:
 
 ### **1.1 Create a Security Group**
 1. Navigate to **AWS Console → EC2 → Security Groups**.
@@ -28,24 +28,25 @@ We will use the **AWS Management Console** to create the necessary resources.
    - **Name**: `cloud-1-key`
    - **Key type**: RSA
    - **Private key format**: `.pem`
-4. Click **Create key pair** and download the `.pem` file to the **Ansible project’s home directory**.
+4. Click **Create key pair** and download the `.pem` file then move it to the home directory of your Ansible project:
+```
+mv ~/Downloads/cloud-1-key.pem ~/cloud-1/
+chmod 600 ~/cloud-1/cloud-1-key.pem 
+```
 
-### **1.3 Launch an EC2 Instance**
-1. Navigate to **AWS Console → EC2 → Instances**.
-2. Click **Launch Instance** and configure:
-   - **AMI**: Ubuntu 22.04
-   - **Instance Type**: `t2.micro`
-   - **Key Pair**: Select `cloud-1-key`
-   - **Security Group**: Select the one created earlier
-   - **Storage**: 8GB (default)
-3. Click **Launch Instance** and note the **public IP address**.
+### **1.3 Creating an EC2 Instance**
+1. Go to AWS Console → EC2 → Launch Instance
+2. Select Ubuntu 22.04 LTS as the OS
+3. Choose instance type t2.micro (Free Tier eligible)
+4. Attach the previously created security group
+5. Select the key pair (cloud-1-key.pem)
+6. Launch the instance
 
 ---
 
-## **2. Configuring Ansible for Deployment**
-
-### **2.1 Define Ansible Inventory (`hosts.yaml`)**
-Your **Ansible inventory** file (`hosts.yaml`) should be structured as follows:
+## **2. Inventory File (hosts.yaml)**
+The inventory file defines the remote servers (VMs) that Ansible will manage. In this project, the inventory is stored in YAML format for better readability.
+### **2.1 Example Inventory File (`hosts.yaml`)**
 
 ```
 all:
@@ -55,17 +56,12 @@ all:
       ansible_user: "{{ secrets.vm1.user }}"
       ansible_ssh_private_key_file: "{{ secrets.vm1.private_key }}"
       ansible_ssh_port: "{{ secrets.vm1.port }}"
+
 ```
 ## **3. Securing Secrets with Ansible Vault**
-### **3.1 Create an Encrypted Secrets File**
-To securely store secrets, we use Ansible Vault.
-
-1. Navigate to your Ansible project directory.
-2. Run the following command to create an encrypted file:
-```
-ansible-vault create secrets.yaml
-```
-3. Add your sensitive information in the following format:
+This project stores sensitive information (e.g., SSH keys, IPs, usernames) in an encrypted Ansible Vault file.
+### **3.1 Example Secrets File**
+Example `example-secrets.yaml`:
 ```
 secrets:
   vm1:
@@ -74,24 +70,87 @@ secrets:
     private_key: <path_to_private_key>
     port: <vm1_ssh_port>
 ```
-4. Save and exit. Ansible will encrypt the file automatically.
 
-### **3.2 Editing the Vault-Protected File**
+### **3.2 Creating a Secure Secrets File**
+* To create a new encrypted secrets file, run:
+```
+ansible-vault create secrets.yaml
+```
+Add the actual credentials inside `secrets.yaml`, then save and exit.
+* To edit the secrets file later:
 ```
 ansible-vault edit secrets.yaml
 ```
-### **3.3 Running Ansible with Vault-Protected Secrets**
-Use the following command to run a playbook with Ansible Vault:
+* To encrypt an existing file:
+```
+ansible-vault encrypt secrets.yaml
+```
+* To decrypt:
+```
+ansible-vault decrypt secrets.yaml
+```
+## **4. Project Structure**
+      cloud-1/
+      │── README.md                   # Documentation  
+      │── cleanup.yaml                 # Playbook to clean up resources  
+      │── deploy.yaml                  # Main deployment playbook  
+      │── example-secrets.yaml         # Example secrets file (unencrypted)  
+      │── hosts.yaml                   # Ansible inventory file  
+      │── roles/                       # Modular Ansible roles  
+      │   ├── common/                  # Common setup tasks  
+      │   │   ├── tasks/  
+      │   │   │   ├── main.yaml        # Common setup tasks  
+      │   ├── db/                      # Database setup (MariaDB)  
+      │   │   ├── files/  
+      │   │   │   ├── Dockerfile       # Dockerfile for MariaDB  
+      │   │   │   ├── setup.sh         # Database initialization script  
+      │   │   ├── tasks/  
+      │   │   │   ├── main.yaml        # MariaDB deployment tasks  
+      │   ├── nginx/                   # Nginx setup  
+      │   │   ├── files/  
+      │   │   │   ├── Dockerfile       # Dockerfile for Nginx  
+      │   │   │   ├── default          # Default Nginx config  
+      │   │   ├── tasks/  
+      │   │   │   ├── main.yaml        # Nginx deployment tasks  
+      │   ├── wp/                      # WordPress setup  
+      │   │   ├── files/  
+      │   │   │   ├── Dockerfile       # Dockerfile for WordPress  
+      │   │   │   ├── setup.sh         # WordPress setup script  
+      │   │   ├── tasks/  
+      │   │   │   ├── main.yaml        # WordPress deployment tasks  
+      │   ├── orchestrate/             # Docker Compose orchestration  
+      │   │   ├── files/  
+      │   │   │   ├── .env  
+      │   │   │   ├── docker-compose.yaml  # Compose file for all services  
+      │   │   ├── tasks/  
+      │   │   │   ├── main.yaml        # Docker Compose deployment tasks  
+
+
+## **5. Deploying the Infrastructure**
+Once the EC2 instance is ready and secrets are configured, run the following steps:
+1. **Verify connectivity** to the EC2 instance:
+```
+ansible -i hosts.yaml all -m ping --ask-vault-pass
+```
+2. **Deploy the services** (MariaDB, WordPress, and Nginx):
 ```
 ansible-playbook -i hosts.yaml deploy.yaml --ask-vault-pass
 ```
-## **4. Deploying Services with Ansible**
-The playbook (deploy.yaml) will: 
-  - ✅ Install Docker & dependencies
-  - ✅ Deploy MariaDB, WordPress, and Nginx as Docker containers
-  - ✅ Configure networking between services
+3. **Verify running containers on the EC2 instance**:
 ```
-ansible-playbook -i hosts.yaml deploy.yaml --ask-vault-pass
+ssh -i ansible-key.pem ubuntu@<vm1_ip>
+docker ps
 ```
-## **5. Conclusion**
-This project automates AWS EC2 provisioning and Dockerized service deployment using Ansible with a secure and modular approach.
+4. **Access WordPress**:
+* Open your browser and navigate to:
+```
+http://<vm1_ip>
+```
+You should see the WordPress page.
+## **6. Cleaning Up**
+To remove the deployed containers and resources, run:
+```
+ansible-playbook -i hosts.yaml cleanup.yaml --ask-vault-pass
+```
+## Contact
+If you have any issues or suggestions, feel free to reach out! 🚀
